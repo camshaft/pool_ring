@@ -40,6 +40,7 @@ defmodule PoolRing.Server do
   def init(_) do
     :ets.new(@ring_sizes, [{:read_concurrency, true}, :named_table, :set])
     :ets.new(@refs, [{:read_concurrency, true}, :named_table, :set])
+    :erlang.process_flag(:trap_exit, true)
     {:ok, HashDict.new}
   end
 
@@ -56,7 +57,7 @@ defmodule PoolRing.Server do
       state = Dict.put(state, name, node_fn)
 
       {:reply, :ok, state}
-    rescue
+    catch
       e ->
         {:reply, e, state}
     end
@@ -75,6 +76,9 @@ defmodule PoolRing.Server do
   def handle_info({:reconnect, index, ring, node_fn}, state) do
     pid = start_pid(index, nil, ring, node_fn)
     :ets.insert(ring, pid)
+    {:noreply, state}
+  end
+  def handle_info(_, state) do
     {:noreply, state}
   end
 
