@@ -3,7 +3,7 @@ defmodule PoolRing.Mixfile do
 
   def project do
     [app: :pool_ring,
-     version: "0.1.0",
+     version: "0.1.1",
      elixir: "~> 1.0",
      description: "create a pool based on a hash ring",
      package: package,
