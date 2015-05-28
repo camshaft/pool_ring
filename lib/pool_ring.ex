@@ -28,4 +28,9 @@ defmodule PoolRing do
         pids
     end
   end
+
+  def list(ring) do
+    {:ok, ring_size} = PoolRing.Server.ring_size(ring)
+    PoolRing.Server.from_preflist(ring, :lists.seq(0, ring_size - 1))
+  end
 end
