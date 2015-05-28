@@ -70,13 +70,17 @@ defmodule PoolRing.Server do
   def handle_info({:DOWN, ref, _type, _object, _info}, state) do
     {index, ring, node_fn} = :ets.lookup_element(@refs, ref, 2)
     :ets.delete(@refs, ref)
-    :timer.send_after(1000, {:reconnect, index, ring, node_fn})
+    :timer.send_after(1000, {:reconnect, index, ring, node_fn, 1000})
     {:noreply, state}
   end
-  def handle_info({:reconnect, index, ring, node_fn}, state) do
+  def handle_info({:reconnect, index, ring, node_fn, timeout}, state) do
     pid = start_pid(index, nil, ring, node_fn)
     :ets.insert(ring, pid)
     {:noreply, state}
+  rescue
+    _ ->
+      :timer.send_after(timeout, {:reconnect, index, ring, node_fn, min(timeout * 2, 30_000)})
+      {:noreply, state}
   end
   def handle_info(_, state) do
     {:noreply, state}
