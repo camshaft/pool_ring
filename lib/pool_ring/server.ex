@@ -26,7 +26,7 @@ defmodule PoolRing.Server do
       :ets.lookup_element(name, index, 2)
     end) |> Enum.filter(fn
       (pid) when is_pid(pid) ->
-        case :erlang.process_info(pid) do
+        case :erlang.process_info(pid, :status) do
           :undefined ->
             false
           _ ->
