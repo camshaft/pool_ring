@@ -21,20 +21,27 @@ defmodule PoolRing.Server do
     end
   end
 
-  def from_preflist(name, preflist) do
-    Enum.map(preflist, fn(index) ->
-      :ets.lookup_element(name, index, 2)
-    end) |> Enum.filter(fn
-      (pid) when is_pid(pid) ->
-        case :erlang.process_info(pid, :status) do
-          :undefined ->
-            false
-          _ ->
-            true
-        end
-      (_) ->
-        false
-    end)
+  def get_preflist(name, info, length) do
+    {:ok, ring_size} = ring_size(name)
+    form_preflist(name, info, ring_size, length, 0, [])
+  end
+
+  defp form_preflist(_name, _info, _ring_size, _length, 5, _acc) do
+    []
+  end
+  defp form_preflist(_name, _info, _ring_size, length, _failures, acc) when length(acc) == length do
+    acc
+  end
+  defp form_preflist(name, info, ring_size, length, failures, acc) do
+    info = :erlang.phash2(info)
+    index = rem(info, ring_size)
+    pid = :ets.lookup_element(name, index, 2)
+    case :erlang.process_info(pid, :status) do
+      :undefined ->
+        form_preflist(name, info, ring_size, length, failures + 1, acc)
+      _ ->
+        form_preflist(name, info, ring_size, length, failures, [pid | acc])
+    end
   end
 
   def init(_) do

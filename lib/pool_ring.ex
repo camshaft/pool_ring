@@ -17,9 +17,7 @@ defmodule PoolRing do
   end
 
   def get(ring, info, preflist_size \\ 1) do
-    {:ok, ring_size} = PoolRing.Server.ring_size(ring)
-    preflist = PoolRing.Hash.hash(info, ring_size, preflist_size)
-    case PoolRing.Server.from_preflist(ring, preflist) do
+    case PoolRing.Server.get_preflist(ring, info, preflist_size) do
       [] when preflist_size == 1 ->
         {:error, :no_connections}
       [pid | _] when preflist_size == 1 ->
@@ -31,6 +29,6 @@ defmodule PoolRing do
 
   def list(ring) do
     {:ok, ring_size} = PoolRing.Server.ring_size(ring)
-    PoolRing.Server.from_preflist(ring, :lists.seq(0, ring_size - 1))
+    PoolRing.Server.get_preflist(ring, ring_size)
   end
 end
